@@ -1,7 +1,80 @@
 # Testing CI/Cd workflow
 
 # Testing CI/CD workflow
-name: ASP.NET Core CI/CD with SonarQube
+#me: ASP.NET Core CI/CD with SonarQube
+#
+#:
+#push:
+#  branches: [ "master" ]
+#pull_request:
+#  branches: [ "master" ]
+#
+#bs:
+#build:
+#  runs-on: ubuntu-latest
+#
+#  steps:
+#  # 1️⃣ Checkout source code
+#  - name: Checkout repository
+#    uses: actions/checkout@v3
+#
+#  # 2️⃣ Setup .NET SDK
+#  - name: Setup .NET
+#    uses: actions/setup-dotnet@v3
+#    with:
+#      dotnet-version: '8.0.x'
+#
+#  # 3️⃣ Restore dependencies
+#  - name: Restore dependencies
+#    run: dotnet restore CiCd_Demo.sln
+#
+#  # 4️⃣ Build project
+#  - name: Build
+#    run: dotnet build CiCd_Demo.sln --no-restore --configuration Release
+#
+#  # 5️⃣ Run tests (optional)
+#  - name: Run tests
+#    run: dotnet test CiCd_Demo.sln --no-build --configuration Release --verbosity normal
+#
+#  # 6️⃣ Run SonarQube scan
+#  - name: SonarQube Scan
+#    uses: sonarsource/sonarqube-scan-action@v2
+#    with:
+#      args: >
+#        -Dsonar.projectKey=CiCd_Demo
+#        -Dsonar.organization=my-org
+#        -Dsonar.host.url="http://localhost:9000"
+#        -Dsonar.login="${{ secrets.SONAR_TOKEN }}"
+#
+#  # 7️⃣ SonarQube Quality Gate check
+#  - name: SonarQube Quality Gate
+#    id: qualitygate
+#    uses: sonarsource/sonarqube-quality-gate-action@v1
+#    with:
+#      sonar_host_url: "http://localhost:9000"
+#      sonar_token: ${{ secrets.SONAR_TOKEN }}
+
+
+
+    # 8️⃣ Conditional Deployment (only if Quality Gate passes)
+    #- name: Deploy to Azure Web App
+    #  if: steps.qualitygate.outputs.status == 'PASSED'
+    #  uses: azure/webapps-deploy@v2
+    #  with:
+    #    app-name: "my-aspnetcore-api"   # Replace with your Azure Web App name
+    #    publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+    #    package: ./publish
+
+    ## 9️⃣ Fail pipeline if Quality Gate fails
+    #- name: Stop deployment if Quality Gate failed
+    #  if: steps.qualitygate.outputs.status != 'PASSED'
+    #  run: |
+    #    echo "❌ SonarQube Quality Gate failed. Stopping deployment."
+    #    exit 1
+
+
+# ✅ ASP.NET Core CI/CD with SonarCloud Integration
+name: ASP.NET Core CI/CD with SonarCloud
 
 on:
   push:
@@ -24,50 +97,23 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    # 3️⃣ Restore dependencies
+    # 3️⃣ Install SonarScanner tool
+    - name: Install SonarScanner
+      run: dotnet tool install --global dotnet-sonarscanner
+
+    # 4️⃣ Restore dependencies
     - name: Restore dependencies
       run: dotnet restore CiCd_Demo.sln
 
-    # 4️⃣ Build project
-    - name: Build
-      run: dotnet build CiCd_Demo.sln --no-restore --configuration Release
+    # 5️⃣ SonarCloud analysis + Build + End
+    - name: Run SonarCloud Scan
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        dotnet sonarscanner begin /o:"prasadp20" /k:"Prasadp20_SonarQube_CiCd_Demo" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        dotnet build CiCd_Demo.sln --configuration Release
+        dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-    # 5️⃣ Run tests (optional)
+    # 6️⃣ Run tests (optional)
     - name: Run tests
       run: dotnet test CiCd_Demo.sln --no-build --configuration Release --verbosity normal
-
-    # 6️⃣ Run SonarQube scan
-    - name: SonarQube Scan
-      uses: sonarsource/sonarqube-scan-action@v2
-      with:
-        args: >
-          -Dsonar.projectKey=CiCd_Demo
-          -Dsonar.organization=my-org
-          -Dsonar.host.url="http://localhost:9000"
-          -Dsonar.login="${{ secrets.SONAR_TOKEN }}"
-
-    # 7️⃣ SonarQube Quality Gate check
-    - name: SonarQube Quality Gate
-      id: qualitygate
-      uses: sonarsource/sonarqube-quality-gate-action@v1
-      with:
-        sonar_host_url: "http://localhost:9000"
-        sonar_token: ${{ secrets.SONAR_TOKEN }}
-
-
-
-    # 8️⃣ Conditional Deployment (only if Quality Gate passes)
-    #- name: Deploy to Azure Web App
-    #  if: steps.qualitygate.outputs.status == 'PASSED'
-    #  uses: azure/webapps-deploy@v2
-    #  with:
-    #    app-name: "my-aspnetcore-api"   # Replace with your Azure Web App name
-    #    publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-    #    package: ./publish
-
-    ## 9️⃣ Fail pipeline if Quality Gate fails
-    #- name: Stop deployment if Quality Gate failed
-    #  if: steps.qualitygate.outputs.status != 'PASSED'
-    #  run: |
-    #    echo "❌ SonarQube Quality Gate failed. Stopping deployment."
-    #    exit 1
