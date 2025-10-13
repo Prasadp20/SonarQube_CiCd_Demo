@@ -9,11 +9,9 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
     private readonly IProductRepo _productRepo;
     public ProductsController(ApplicationDbContext db, IProductRepo productRepo)
     {
-        this._db = db;
         this._productRepo = productRepo;
     }
 
@@ -76,23 +74,4 @@ public class ProductsController : ControllerBase
             return NotFound(new { message = $"Product with ID {product.Id} not found or update failed." });
     }
 
-
-    //[HttpPut("{id:int}")]
-    //public async Task<IActionResult> Update(int id, Product product)
-    //{
-    //    if (id != product.Id) return BadRequest();
-    //    _db.Entry(product).State = EntityState.Modified;
-    //    await _db.SaveChangesAsync();
-    //    return NoContent();
-    //}
-
-    //[HttpDelete("{id:int}")]
-    //public async Task<IActionResult> Delete(int id)
-    //{
-    //    var p = await _db.Products.FindAsync(id);
-    //    if (p == null) return NotFound();
-    //    _db.Products.Remove(p);
-    //    await _db.SaveChangesAsync();
-    //    return NoContent();
-    //}
 }
